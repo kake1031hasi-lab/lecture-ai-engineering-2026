@@ -151,7 +151,16 @@ def search_graph(query: str) -> dict:
             adjacent[a].add(b)
             adjacent[b].add(a)
 
-    seeds = [hit for hit in search(query) if hit["page_id"] in pages][:min(GRAPH_START_K, GRAPH_MAX_RESULTS)]
+    hits = [hit for hit in search(query) if hit["page_id"] in pages]
+    limit = min(GRAPH_START_K, GRAPH_MAX_RESULTS)
+    seeds, seen_docs = [], set()
+    for hit in hits:
+        if hit["document_id"] not in seen_docs and len(seeds) < limit:
+            seeds.append(hit)
+            seen_docs.add(hit["document_id"])
+    for hit in hits:
+        if hit not in seeds and len(seeds) < limit:
+            seeds.append(hit)
     seed_ids = {seed["page_id"] for seed in seeds}
     results, candidates = [], {}
     for rank, seed in enumerate(seeds):
